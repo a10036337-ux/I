@@ -1,33 +1,78 @@
-# LURL canvas image crawler
+# 台股專業量化交易系統
 
-This repository contains a small Python crawler for LURL pages that render
-images through JavaScript calls such as:
+本專案提供一套模組化台股看盤、下單、策略與回測系統，支援永豐 Shioaji API、FastAPI、SQLite、React、TypeScript、TradingView Lightweight Charts 與 Ant Design。
 
-```js
-canvas_img('https://r2limit2.lurl.cc/20260530/4dc0715c23f6259e6ffaf7cb7e5112a1.jpg','canvas_1','0');
+> 安全提醒：請勿把真實 API_KEY / SECRET_KEY 寫入程式或提交到 Git。請使用 `.env` 或登入畫面輸入。
+
+## 專案結構
+
+```text
+backend/      FastAPI、Shioaji、WebSocket、SQLAlchemy、Pandas/Numpy
+frontend/     React、TypeScript、Vite、Lightweight Charts、Ant Design
+database/     SQLite 資料庫掛載目錄
+strategies/   策略擴充說明
+services/     部署/服務說明
 ```
 
-The crawler is for pages you are authorized to access. It does not guess,
-brute-force, or bypass passwords; provide the password yourself with
-`--password` or enter it at the prompt.
+## 功能
 
-## Usage
+- 永豐 API 登入：`POST /api/login`，登入成功回傳帳號、股票帳戶與期貨帳戶。
+- 歷史資料：`GET /api/kbars?symbol=2330&start=...&end=...&interval=1d`，支援股票、期貨、指數與 1m/5m/15m/30m/60m/1d。
+- 即時行情：`/ws/market` 推送 Tick、BidAsk、成交價、成交量、五檔與漲跌幅。
+- K 線圖：日 K、60 分 K、5 分 K 切換，支援十字線、縮放、拖曳與成交量。
+- 技術指標：後端內建 MA、EMA、BBANDS、RSI、MACD、KD。
+- 自選股：新增、刪除、排序欄位、群組並存入 SQLite。
+- 下單：`POST /api/order` 支援股票/期貨、市價/限價、ROD/IOC/FOK、買進/賣出。
+- 庫存與損益：`GET /api/positions`、`GET /api/pnl`。
+- 委託回報：`GET /api/orders`。
+- 策略與回測：RSI、MACD、KD、布林通道與可插拔 Strategy Engine。
+
+## 本機安裝
+
+### Backend
 
 ```bash
-python3 lurl_canvas_crawler.py 'https://lurl.cc/TxqzI' --password 'YOUR_PASSWORD' --out-dir downloads
+cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp ../.env.example ../.env
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Useful options:
+### Frontend
 
-- `--list-only`: print the extracted `canvas_img` image URLs without downloading.
-- `--no-password`: fetch and parse a public/unlocked page without submitting a password.
-- `--html-file page.html`: parse saved post-unlock HTML if the site needs browser-only JavaScript.
-- `--save-html unlocked.html`: save the fetched/unlocked HTML for debugging.
-- `--delay 0.5`: wait between image downloads to reduce load on the remote server.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## Notes
+開啟 http://localhost:5173。
 
-The page at `https://lurl.cc/TxqzI` currently displays a password unlock screen.
-After successful unlock, this script extracts every URL passed as the first
-argument of `canvas_img(...)`, preserves cookies from the unlock request, and
-sends the original page as the download `Referer`.
+## Docker 部署
+
+```bash
+cp .env.example .env
+# 將 SHIOAJI_API_KEY / SHIOAJI_SECRET_KEY 寫入 .env；模擬模式可維持 true。
+docker compose up --build
+```
+
+- Backend: http://localhost:8000
+- Frontend: http://localhost:5173
+
+## API 範例
+
+```bash
+curl 'http://localhost:8000/api/kbars?symbol=2330&start=2025-01-01T00:00:00&end=2025-12-31T00:00:00&interval=1d'
+```
+
+```bash
+curl -X POST 'http://localhost:8000/api/order' \
+  -H 'Content-Type: application/json' \
+  -d '{"symbol":"2330","action":"buy","price":600,"quantity":1000,"price_type":"limit","order_type":"ROD","security_type":"stock"}'
+```
+
+## 策略擴充
+
+新增策略時繼承 `backend/app/strategies/base.py` 的 `Strategy`，實作 `generate_signals()` 回傳 `signal` 欄位：`1` 買進、`-1` 賣出、`0` 觀望，並在 `backend/app/services/strategy_engine.py` 註冊。

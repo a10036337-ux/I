@@ -1,0 +1,15 @@
+html, body, #root { margin: 0; min-height: 100%; background: #020617; }
+.app-shell { min-height: 100vh; background: #020617; color: #e2e8f0; }
+.app-header { display: flex; align-items: center; justify-content: space-between; background: #111827; border-bottom: 1px solid #334155; }
+.app-header h3 { color: #f8fafc !important; margin: 0 !important; }
+.workspace { height: calc(100vh - 64px); background: #020617; }
+.left-pane, .right-pane { background: #0f172a !important; padding: 12px; overflow: auto; }
+.center-pane { padding: 12px; overflow: auto; }
+.panel-card { margin-bottom: 12px; background: #111827 !important; border-color: #334155 !important; }
+.panel-card .ant-card-head, .panel-card .ant-card-body, .panel-card label, .panel-card .ant-typography { color: #e2e8f0 !important; }
+.watchlist .ant-list-item { cursor: pointer; color: #e2e8f0; border-color: #334155 !important; padding: 10px; border-radius: 6px; }
+.selected-row { background: #1d4ed8; }
+.chart-card { min-height: 620px; }
+.tape-card { min-height: 240px; }
+.indicator-strip { color: #94a3b8; border-top: 1px solid #334155; padding-top: 8px; margin-top: 8px; }
+.ant-table { background: transparent !important; }
